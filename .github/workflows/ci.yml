@@ -82,54 +82,9 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
       continue-on-error: true
     
-    - name: Test with pytest
+    - name: Run tests with pytest
       run: |
-        if [ -f test_suite.py ]; then
-          echo "Running tests from test_suite.py..."
-          # Try to import the modules first to check for import issues
-          python -c "
-try:
-    import sys
-    sys.path.insert(0, '.')
-    from app import app, WebScraper
-    print('✓ Successfully imported app modules')
-except Exception as e:
-    print(f'✗ Import error: {e}')
-    import traceback
-    traceback.print_exc()
-    sys.exit(1)
-"
-          
-          # Run the actual tests
-          python -m pytest test_suite.py -v --cov=app --cov-report=xml --tb=short
-        elif [ -d tests ]; then
-          echo "Running tests from tests directory..."
-          python -m pytest tests/ -v --cov=app --cov-report=xml --tb=short
-        else
-          echo "No test files found, creating basic smoke test..."
-          cat > smoke_test.py << 'EOF'
-import sys
-import os
-sys.path.insert(0, '.')
-
-def test_app_imports():
-    """Test that main app modules can be imported"""
-    try:
-        import app
-        print("✓ Successfully imported app module")
-        assert True
-    except ImportError as e:
-        print(f"✗ Failed to import app: {e}")
-        assert False, f"Failed to import app: {e}"
-
-def test_basic_functionality():
-    """Basic smoke test"""
-    assert 1 + 1 == 2
-    print("✓ Basic functionality test passed")
-EOF
-          python -m pytest smoke_test.py -v
-        fi
-      continue-on-error: false
+        python -m pytest test_suite.py -v --cov=app --cov-report=xml
     
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4
