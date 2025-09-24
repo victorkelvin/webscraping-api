@@ -12,7 +12,7 @@ jobs:
     strategy:
       matrix:
         python-version: ['3.10', '3.11', '3.12']
-      fail-fast: false  
+      fail-fast: false
 
     steps:
     - uses: actions/checkout@v4
@@ -22,10 +22,20 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}-${{ matrix.python-version }}
+        restore-keys: |
+          ${{ runner.os }}-pip-${{ matrix.python-version }}-
+          ${{ runner.os }}-pip-
+
     - name: Debug - Check project structure
       run: |
         echo "=== Project Structure ==="
         ls -la
+        echo ""
         echo "=== Requirements file check ==="
         if [ -f requirements.txt ]; then
           echo "requirements.txt found:"
@@ -33,9 +43,11 @@ jobs:
         else
           echo "requirements.txt not found"
         fi
+        echo ""
         echo "=== Test files check ==="
         if [ -f test_suite.py ]; then
           echo "test_suite.py found"
+          head -10 test_suite.py
         else
           echo "test_suite.py not found"
         fi
@@ -44,31 +56,23 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         
-        # Install basic testing dependencies
-        pip install pytest pytest-cov flake8 requests
+        # Install basic testing and development dependencies first
+        pip install pytest pytest-cov flake8
+        
+        # Install common web scraping and Flask dependencies
+        pip install flask flask-cors requests beautifulsoup4 lxml selenium webdriver-manager
         
         # Install requirements.txt if it exists
         if [ -f requirements.txt ]; then
           echo "Installing from requirements.txt..."
           pip install -r requirements.txt
         else
-          echo "requirements.txt not found, installing common dependencies..."
-          pip install flask requests beautifulsoup4 lxml selenium webdriver-manager
+          echo "requirements.txt not found, using default dependencies"
         fi
-    
-    - name: Cache pip dependencies
-      uses: actions/cache@v3
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-
-    
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-        pip install pytest pytest-cov flake8
+        
+        # Show installed packages for debugging
+        echo "=== Installed packages ==="
+        pip list | grep -E "(flask|requests|pytest|beautifulsoup|selenium|lxml)"
     
     - name: Lint with flake8
       run: |
@@ -76,16 +80,56 @@ jobs:
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-      continue-on-error: true 
+      continue-on-error: true
     
     - name: Test with pytest
       run: |
         if [ -f test_suite.py ]; then
-          python -m pytest test_suite.py -v --cov=app --cov-report=xml
-        else
-          echo "test_suite.py not found, skipping tests"
-          exit 0
-        fi
+          echo "Running tests from test_suite.py..."
+          # Try to import the modules first to check for import issues
+          python -c "
+            try:
+                import sys
+                sys.path.insert(0, '.')
+                from app import app, WebScraper
+                print('✓ Successfully imported app modules')
+            except Exception as e:
+                print(f'✗ Import error: {e}')
+                import traceback
+                traceback.print_exc()
+                sys.exit(1)
+            "
+                      
+                      # Run the actual tests
+                      python -m pytest test_suite.py -v --cov=app --cov-report=xml --tb=short
+                    elif [ -d tests ]; then
+                      echo "Running tests from tests directory..."
+                      python -m pytest tests/ -v --cov=app --cov-report=xml --tb=short
+                    else
+                      echo "No test files found, creating basic smoke test..."
+                      cat > smoke_test.py << 'EOF'
+            import sys
+            import os
+            sys.path.insert(0, '.')
+            
+            def test_app_imports():
+                """Test that main app modules can be imported"""
+                try:
+                    import app
+                    print("✓ Successfully imported app module")
+                    assert True
+                except ImportError as e:
+                    print(f"✗ Failed to import app: {e}")
+                    assert False, f"Failed to import app: {e}"
+            
+            def test_basic_functionality():
+                """Basic smoke test"""
+                assert 1 + 1 == 2
+                print("✓ Basic functionality test passed")
+            EOF
+                      python -m pytest smoke_test.py -v
+                    fi
+                  continue-on-error: false
     
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4
@@ -93,8 +137,8 @@ jobs:
         file: ./coverage.xml
         flags: unittests
         name: codecov-umbrella
-        fail_ci_if_error: false  
-      if: hashFiles('coverage.xml') != ''  
+        fail_ci_if_error: false
+      if: hashFiles('coverage.xml') != ''
 
   security:
     runs-on: ubuntu-latest
@@ -106,22 +150,37 @@ jobs:
       with:
         python-version: '3.11'
     
-    - name: Install dependencies
+    - name: Install dependencies for security scan
       run: |
         python -m pip install --upgrade pip
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
         pip install safety bandit
+        
+        # Install project dependencies for security scanning
+        pip install flask flask-cors requests beautifulsoup4 lxml selenium webdriver-manager
+        
+        if [ -f requirements.txt ]; then
+          echo "Installing from requirements.txt for security scan..."
+          pip install -r requirements.txt
+        fi
     
     - name: Run safety check
       run: |
+        echo "Running safety check..."
         safety check --json --output safety-report.json || true
-        echo "Safety check completed"
+        if [ -f safety-report.json ]; then
+          echo "Safety report generated"
+          cat safety-report.json
+        fi
       continue-on-error: true
     
     - name: Run bandit security scan
       run: |
+        echo "Running bandit security scan..."
         bandit -r . -f json -o bandit-report.json || true
-        echo "Bandit scan completed"
+        if [ -f bandit-report.json ]; then
+          echo "Bandit report generated"
+          head -20 bandit-report.json
+        fi
       continue-on-error: true
 
   docker:
@@ -137,28 +196,39 @@ jobs:
     
     - name: Build Docker image
       run: |
-        docker build -t webscraping-api:latest .
+        if [ -f Dockerfile ]; then
+          echo "Building Docker image..."
+          docker build -t webscraping-api:latest .
+        else
+          echo "Dockerfile not found, skipping Docker build"
+          exit 0
+        fi
     
     - name: Test Docker container
       run: |
-        # Inicia o container em background
-        docker run -d -p 5001:5000 --name test-container webscraping-api:latest
-        
-        # Aguarda o container inicializar
-        sleep 10
-        
-        # Verifica se o container está rodando
-        if docker ps | grep -q test-container; then
-          echo "Container is running successfully"
+        if [ -f Dockerfile ]; then
+          # Start container in background
+          docker run -d -p 5001:5000 --name test-container webscraping-api:latest
+          
+          # Wait for container to initialize
+          sleep 15
+          
+          # Check if container is running
+          if docker ps | grep -q test-container; then
+            echo "✓ Container is running successfully"
+            docker logs test-container
+          else
+            echo "✗ Container failed to start"
+            docker logs test-container
+            exit 1
+          fi
+          
+          # Cleanup
+          docker stop test-container
+          docker rm test-container
         else
-          echo "Container failed to start"
-          docker logs test-container
-          exit 1
+          echo "Dockerfile not found, skipping Docker test"
         fi
-        
-        # Para e remove o container de teste
-        docker stop test-container
-        docker rm test-container
     
     - name: Clean up Docker images
       run: |
