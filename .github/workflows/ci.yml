@@ -21,6 +21,40 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
+
+    - name: Debug - Check project structure
+      run: |
+        echo "=== Project Structure ==="
+        ls -la
+        echo "=== Requirements file check ==="
+        if [ -f requirements.txt ]; then
+          echo "requirements.txt found:"
+          cat requirements.txt
+        else
+          echo "requirements.txt not found"
+        fi
+        echo "=== Test files check ==="
+        if [ -f test_suite.py ]; then
+          echo "test_suite.py found"
+        else
+          echo "test_suite.py not found"
+        fi
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        
+        # Install basic testing dependencies
+        pip install pytest pytest-cov flake8 requests
+        
+        # Install requirements.txt if it exists
+        if [ -f requirements.txt ]; then
+          echo "Installing from requirements.txt..."
+          pip install -r requirements.txt
+        else
+          echo "requirements.txt not found, installing common dependencies..."
+          pip install flask requests beautifulsoup4 lxml selenium webdriver-manager
+        fi
     
     - name: Cache pip dependencies
       uses: actions/cache@v3
