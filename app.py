@@ -1,0 +1,299 @@
+from flask import Flask, jsonify, request
+from flask_cors import CORS
+import requests
+from bs4 import BeautifulSoup
+import time
+import logging
+from urllib.parse import urljoin, urlparse
+import re
+from datetime import datetime
+
+app = Flask(__name__)
+CORS(app)
+
+# loggin config
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+class WebScraper:
+    def __init__(self):
+        self.session = requests.Session()
+        self.session.headers.update({
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        })
+    
+    def scrape_page_info(self, url):
+        """Extract basic page information"""
+        try:
+            response = self.session.get(url, timeout=10)
+            response.raise_for_status()
+            
+            soup = BeautifulSoup(response.content, 'html.parser')
+            
+            # basic info
+            title = soup.find('title')
+            title = title.get_text().strip() if title else "Sem título"
+            
+            description = soup.find('meta', attrs={'name': 'description'})
+            description = description.get('content', '').strip() if description else "No description"
+            
+            # Searching for images
+            images = []
+            for img in soup.find_all('img', src=True):
+                img_url = urljoin(url, img['src'])
+                images.append({
+                    'url': img_url,
+                    'alt': img.get('alt', ''),
+                    'title': img.get('title', '')
+                })
+            
+            # Searching for links
+            links = []
+            for link in soup.find_all('a', href=True):
+                link_url = urljoin(url, link['href'])
+                links.append({
+                    'url': link_url,
+                    'text': link.get_text().strip(),
+                    'title': link.get('title', '')
+                })
+            
+            # Extracting headings
+            headings = []
+            for i in range(1, 7):
+                for heading in soup.find_all(f'h{i}'):
+                    headings.append({
+                        'level': i,
+                        'text': heading.get_text().strip()
+                    })
+            
+            return {
+                'url': url,
+                'title': title,
+                'description': description,
+                'images': images[:10],  
+                'links': links[:20],    
+                'headings': headings,
+                'scraped_at': datetime.now().isoformat(),
+                'status': 'success'
+            }
+            
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Scraping error at {url}: {str(e)}")
+            return {
+                'url': url,
+                'error': str(e),
+                'status': 'error',
+                'scraped_at': datetime.now().isoformat()
+            }
+    
+    def scrape_products_generic(self, url):
+        """Try to extract products from a generic e-commerce page"""
+        try:
+            response = self.session.get(url, timeout=10)
+            response.raise_for_status()
+            
+            soup = BeautifulSoup(response.content, 'html.parser')
+            
+            products = []
+            
+            # Common product selectors
+            product_selectors = [
+                '.product',
+                '.item',
+                '[data-product-id]',
+                '.product-item',
+                '.product-card'
+            ]
+            
+            for selector in product_selectors:
+                product_elements = soup.select(selector)
+                if product_elements:
+                    for element in product_elements[:10]:  # limit to first 10 products
+                        product = self.extract_product_info(element, url)
+                        if product:
+                            products.append(product)
+                    break
+            
+            return {
+                'url': url,
+                'products': products,
+                'total_found': len(products),
+                'scraped_at': datetime.now().isoformat(),
+                'status': 'success'
+            }
+            
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Scraping error at {url}: {str(e)}")
+            return {
+                'url': url,
+                'error': str(e),
+                'status': 'error',
+                'scraped_at': datetime.now().isoformat()
+            }
+    
+    def extract_product_info(self, element, base_url):
+        """Extract product info from a BeautifulSoup element"""
+        try:
+            # Try to find product name
+            name_selectors = ['h1', 'h2', 'h3', '.title', '.name', '.product-name', '.product-title']
+            name = ""
+            for selector in name_selectors:
+                name_elem = element.select_one(selector)
+                if name_elem:
+                    name = name_elem.get_text().strip()
+                    break
+            
+            # Try to find price
+            price_selectors = ['.price', '.cost', '.amount', '[data-price]', '.product-price']
+            price = ""
+            for selector in price_selectors:
+                price_elem = element.select_one(selector)
+                if price_elem:
+                    price_text = price_elem.get_text().strip()
+                    # Extracting price using regex
+                    price_match = re.search(r'[R$€£¥₹US]\s*[\d.,]+', price_text)
+                    if price_match:
+                        price = price_match.group()
+                        break
+            
+            # Try to find image
+            image = ""
+            img_elem = element.select_one('img')
+            if img_elem and img_elem.get('src'):
+                image = urljoin(base_url, img_elem['src'])
+            
+            # Try to find product link
+            link = ""
+            link_elem = element.select_one('a[href]')
+            if link_elem:
+                link = urljoin(base_url, link_elem['href'])
+            
+            if name:  
+                return {
+                    'name': name,
+                    'price': price,
+                    'image': image,
+                    'link': link
+                }
+            
+        except Exception as e:
+            logger.error(f"Error at extract product information: {str(e)}")
+        
+        return None
+
+scraper = WebScraper()
+
+@app.route('/')
+def home():
+    """Root endpoint with API info"""
+    return jsonify({
+        'message': 'Web Scraping API',
+        'version': '1.0.0',
+        'endpoints': {
+            '/scrape': 'POST - Basic scraping of a web page',
+            '/scrape/products': 'POST - Extract products from an e-commerce page',
+            '/health': 'GET - API health check'
+        },
+        'author': 'Victor Kelvin',
+        'documentation': 'https://github.com/victorkelvin/web-scraping-api'
+    })
+
+@app.route('/health')
+def health():
+    """Endpoint health check"""
+    return jsonify({
+        'status': 'healthy',
+        'timestamp': datetime.now().isoformat(),
+        'service': 'Web Scraping API'
+    })
+
+@app.route('/scrape', methods=['POST'])
+def scrape_page():
+    """Basic scraping of a web page"""
+    try:
+        data = request.get_json()
+        
+        if not data or 'url' not in data:
+            return jsonify({
+                'error': 'URL is required',
+                'status': 'error'
+            }), 400
+        
+        url = data['url']
+        
+        # URL basic validation
+        parsed_url = urlparse(url)
+        if not parsed_url.scheme or not parsed_url.netloc:
+            return jsonify({
+                'error': 'Invalid URL',
+                'status': 'error'
+            }), 400
+        
+        logger.info(f"Scrapiing: {url}")
+        result = scraper.scrape_page_info(url)
+        
+        if result['status'] == 'error':
+            return jsonify(result), 500
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        logger.error(f"Endpoint error at /scrape: {str(e)}")
+        return jsonify({
+            'error': 'Internal server error',
+            'status': 'error'
+        }), 500
+
+@app.route('/scrape/products', methods=['POST'])
+def scrape_products():
+    """Extract products from an e-commerce page"""
+    try:
+        data = request.get_json()
+        
+        if not data or 'url' not in data:
+            return jsonify({
+                'error': 'URL is required',
+                'status': 'error'
+            }), 400
+        
+        url = data['url']
+        
+        # URL basic validation
+        parsed_url = urlparse(url)
+        if not parsed_url.scheme or not parsed_url.netloc:
+            return jsonify({
+                'error': 'Invalid URL',
+                'status': 'error'
+            }), 400
+        
+        logger.info(f"Products Scraping at: {url}")
+        result = scraper.scrape_products_generic(url)
+        
+        if result['status'] == 'error':
+            return jsonify(result), 500
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        logger.error(f"Endpoint error at /scrape/products: {str(e)}")
+        return jsonify({
+            'error': 'Internal server error',
+            'status': 'error'
+        }), 500
+
+@app.errorhandler(404)
+def not_found(error):
+    return jsonify({
+        'error': 'Endpoint not found',
+        'status': 'error'
+    }), 404
+
+@app.errorhandler(500)
+def internal_error(error):
+    return jsonify({
+        'error': 'Internal server error',
+        'status': 'error'
+    }), 500
+
+if __name__ == '__main__':
+    app.run(debug=True, host='0.0.0.0', port=5000)
