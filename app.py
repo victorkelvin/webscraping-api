@@ -151,7 +151,7 @@ class WebScraper:
                 if price_elem:
                     price_text = price_elem.get_text().strip()
                     # Extracting price using regex
-                    price_match = re.search(r'[R$€£¥₹US]\s*[\d.,]+', price_text)
+                    price_match = re.search(r'([A-Za-z]{0,3}\$|€|£|¥|₹)\s*[\d.,]+', price_text)
                     if price_match:
                         price = price_match.group()
                         break
