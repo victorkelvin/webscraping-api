@@ -51,7 +51,7 @@ class TestWebScrapingAPI(unittest.TestCase):
     
     def test_scrape_endpoint_valid_url(self):
         """Tests scraping with a valid URL"""
-        test_payload = {"url": "https://httpbin.org/html"}
+        test_payload = {"url": "https://books.toscrape.com/"}
         
         response = self.app.post('/scrape',
                                data=json.dumps(test_payload),
@@ -93,7 +93,7 @@ class TestWebScrapingAPI(unittest.TestCase):
     
     def test_products_endpoint_valid_url(self):
         """Tests product scraping with a valid URL"""
-        test_payload = {"url": "https://httpbin.org/html"}
+        test_payload = {"url": "https://books.toscrape.com/"}
         
         response = self.app.post('/scrape/products',
                                data=json.dumps(test_payload),
@@ -209,7 +209,7 @@ class TestAPIIntegration(unittest.TestCase):
     def test_full_scraping_workflow(self):
         """Tests the full scraping workflow"""
         # Test with a site we know works
-        payload = {"url": "https://httpbin.org/html"}
+        payload = {"url": "https://books.toscrape.com/"}
         
         response = requests.post("http://localhost:5000/scrape", 
                                json=payload, timeout=10)
@@ -223,7 +223,7 @@ class TestAPIIntegration(unittest.TestCase):
     
     def test_rate_limiting_behavior(self):
         """Tests behavior with multiple requests"""
-        payload = {"url": "https://httpbin.org/html"}
+        payload = {"url": "https://books.toscrape.com/"}
         
         # Make multiple requests quickly
         responses = []
