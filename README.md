@@ -1,58 +1,58 @@
 # 🕷️ Web Scraping API
 
-Uma API REST robusta e flexível para web scraping, construída com Flask e BeautifulSoup. Perfeita para extrair dados de páginas web de forma programática e escalável.
+A robust and flexible REST API for web scraping, built with Flask and BeautifulSoup. Perfect for programmatically and scalably extracting data from web pages.
 
-## ✨ Características
+## ✨ Features
 
-- 🚀 **API RESTful** - Endpoints bem estruturados e documentados
-- 🛡️ **Tratamento de Erros** - Validação de entrada e tratamento robusto de exceções
-- 🌐 **CORS Habilitado** - Pronto para uso em aplicações web frontend
-- 📦 **Containerizado** - Docker pronto para deployment
-- 🔍 **Scraping Inteligente** - Extração automática de produtos de e-commerce
-- 📝 **Logging Completo** - Monitoramento e debugging facilitados
-- ⚡ **Performance** - Headers otimizados e sessões reutilizáveis
+- 🚀 **RESTful API** - Well-structured and documented endpoints
+- 🛡️ **Error Handling** - Input validation and robust exception handling
+- 🌐 **CORS Enabled** - Ready for use in frontend web applications
+- 📦 **Containerized** - Docker-ready for deployment
+- 🔍 **Smart Scraping** - Automatic extraction of e-commerce products
+- 📝 **Full Logging** - Easy monitoring and debugging
+- ⚡ **Performance** - Optimized headers and reusable sessions
 
-## 🛠️ Tecnologias
+## 🛠️ Technologies
 
-- **Flask** - Framework web minimalista e flexível
-- **BeautifulSoup4** - Parser HTML/XML poderoso
-- **Requests** - Cliente HTTP elegante
-- **Docker** - Containerização para deployment
-- **Gunicorn** - Servidor WSGI para produção
+- **Flask** - Minimal and flexible web framework
+- **BeautifulSoup4** - Powerful HTML/XML parser
+- **Requests** - Elegant HTTP client
+- **Docker** - Containerization for deployment
+- **Gunicorn** - WSGI server for production
 
-## 📋 Pré-requisitos
+## 📋 Prerequisites
 
 - Python 3.8+
 - pip
-- Docker (opcional)
+- Docker (optional)
 
-## 🚀 Instalação
+## 🚀 Installation
 
-### Instalação Local
+### Local Installation
 
 ```bash
-# Clone o repositório
+# Clone the repository
 git clone https://github.com/victorkelvin/webscraping-api.git
 cd webscraping-api
 
-# Instale as dependências
+# Install dependencies
 pip install -r requirements.txt
 
-# Execute a aplicação
+# Run the application
 python app.py
 ```
 
-### Usando Docker
+### Using Docker
 
 ```bash
-# Build da imagem
+# Build the image
 docker build -t webscraping-api .
 
-# Execute o container
+# Run the container
 docker run -p 5000:5000 webscraping-api
 ```
 
-## 📖 Documentação da API
+## 📖 API Documentation
 
 ### Base URL
 ```
@@ -62,21 +62,21 @@ http://localhost:5000
 ### Endpoints
 
 #### 🏠 GET `/`
-Informações gerais da API
+General API information
 ```json
 {
   "message": "Web Scraping API",
   "version": "1.0.0",
   "endpoints": {
-    "/scrape": "POST - Faz scraping básico de uma URL",
-    "/scrape/products": "POST - Extrai produtos de uma página de e-commerce",
-    "/health": "GET - Status da API"
+    "/scrape": "POST - Basic scraping of a URL",
+    "/scrape/products": "POST - Extracts products from an e-commerce page",
+    "/health": "GET - API status"
   }
 }
 ```
 
 #### 💓 GET `/health`
-Health check da API
+API health check
 ```json
 {
   "status": "healthy",
@@ -86,7 +86,7 @@ Health check da API
 ```
 
 #### 🔍 POST `/scrape`
-Extrai informações básicas de uma página web
+Extracts basic information from a web page
 
 **Request:**
 ```json
@@ -127,7 +127,7 @@ Extrai informações básicas de uma página web
 ```
 
 #### 🛒 POST `/scrape/products`
-Extrai produtos de páginas de e-commerce
+Extracts products from e-commerce pages
 
 **Request:**
 ```json
@@ -154,137 +154,121 @@ Extrai produtos de páginas de e-commerce
 }
 ```
 
-## 🧪 Testando a API
+## 🧪 Testing the API
 
-### Usando o script de teste incluído:
+### Using the included test script:
 
 ```bash
 python test_api.py
 ```
 
-### Usando curl:
+### Using curl:
 
 ```bash
 # Health check
 curl http://localhost:5000/health
 
-# Scraping básico
+# Basic scraping
 curl -X POST http://localhost:5000/scrape \
   -H "Content-Type: application/json" \
   -d '{"url": "https://httpbin.org/html"}'
 
-# Scraping de produtos
+# Product scraping
 curl -X POST http://localhost:5000/scrape/products \
   -H "Content-Type: application/json" \
   -d '{"url": "https://example-shop.com"}'
 ```
 
-### Usando Python:
+### Using Python:
 
 ```python
 import requests
 
-# Scraping básico
+# Basic scraping
 response = requests.post('http://localhost:5000/scrape', 
                         json={'url': 'https://example.com'})
 print(response.json())
 
-# Scraping de produtos
+# Product scraping
 response = requests.post('http://localhost:5000/scrape/products', 
                         json={'url': 'https://shop.example.com'})
 print(response.json())
 ```
 
-## 🔧 Configuração
+## 🔧 Configuration
 
-### Variáveis de Ambiente
+### Environment Variables
 
-- `FLASK_ENV` - Ambiente da aplicação (development/production)
-- `PORT` - Porta da aplicação (default: 5000)
+- `FLASK_ENV` - Application environment (development/production)
+- `PORT` - Application port (default: 5000)
 
-### Headers Personalizados
+### Custom Headers
 
-A API usa headers otimizados para evitar bloqueios:
+The API uses optimized headers to avoid blocking:
 ```python
 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
 ```
 
-## 🚀 Deploy
+## 🎯 Use Cases
 
-### Heroku
+- **Price Monitoring** - Track product prices on e-commerce sites
+- **Competitor Analysis** - Collect data from competitor sites
+- **Content Aggregation** - Compile information from multiple sources
+- **SEO Analysis** - Extract metadata and page structure
+- **Lead Generation** - Collect contact information from websites
 
-```bash
-# Instale o Heroku CLI e faça login
-heroku create sua-api-webscraping
+## ⚠️ Limitations and Considerations
 
-# Deploy
-git push heroku main
-```
+- **Rate Limiting** - Respect site limits
+- **robots.txt** - Check scraping policies
+- **JavaScript** - This API does not execute JavaScript (use Selenium for SPAs)
+- **Timeout** - Requests have a 10-second timeout
+- **Legal** - Only use on sites where you have permission
 
-### Railway/Render
+## 🤝 Contributing
 
-1. Conecte seu repositório GitHub
-2. Configure as variáveis de ambiente
-3. Deploy automático
+1. Fork the project
+2. Create a branch for your feature (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
-## 🎯 Casos de Uso
-
-- **Monitoramento de Preços** - Acompanhe preços de produtos em e-commerce
-- **Análise de Concorrência** - Colete dados de sites concorrentes
-- **Agregação de Conteúdo** - Compile informações de múltiplas fontes
-- **SEO Analysis** - Extraia metadados e estrutura de páginas
-- **Lead Generation** - Colete informações de contato de websites
-
-## ⚠️ Limitações e Considerações
-
-- **Rate Limiting** - Respeite os limites dos sites
-- **robots.txt** - Verifique as políticas de scraping
-- **JavaScript** - Esta API não executa JavaScript (use Selenium para SPAs)
-- **Timeout** - Requests têm timeout de 10 segundos
-- **Legal** - Use apenas em sites onde você tem permissão
-
-## 🤝 Contribuindo
-
-1. Fork o projeto
-2. Crie uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
-3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
-4. Push para a branch (`git push origin feature/AmazingFeature`)
-5. Abra um Pull Request
-
-## 📄 Estrutura do Projeto
+## 📄 Project Structure
 
 ```
 webscraping-api/
-├── app.py              # Aplicação principal
-├── requirements.txt    # Dependências
-├── Dockerfile         # Configuração Docker
-├── test_api.py        # Scripts de teste
-├── README.md          # Documentação
-└── .gitignore         # Arquivos ignorados
+├── app.py              
+├── scraper/
+│   ├── __init__.py
+│   └── web_scraper.py  
+├── tests/
+│   ├── test_app.py
+│   └── test_scraper.py
+└── requirements.txt
 ```
 
-## 📝 Licença
+## 📝 License
 
-Este projeto está sob a licença MIT. Veja o arquivo `LICENSE` para mais detalhes.
+This project is under the MIT license. See the `LICENSE` file for more details.
 
-## 👨‍💻 Autor
+## 👨‍💻 Author
 
-**Seu Nome**
-- GitHub: [@seu-usuario](https://github.com/seu-usuario)
-- LinkedIn: [Seu LinkedIn](https://linkedin.com/in/seu-perfil)
-- Email: seu.email@example.com
+**Your Name**
+- GitHub: [@victorkelvin](https://github.com/victorkelvin)
+- LinkedIn: [Victor Kelvin](https://linkedin.com/in/victor-kelvin)
+- Email: victorkelvin@gmail.com
 
 ## 📊 Roadmap
 
-- [ ] Autenticação JWT
-- [ ] Rate limiting por IP
-- [ ] Cache Redis
-- [ ] Suporte a JavaScript (Selenium)
-- [ ] Webhooks para notificações
-- [ ] Dashboard web para monitoramento
+- [ ] JWT Authentication
+- [ ] IP-based rate limiting
+- [ ] Redis cache
+- [ ] JavaScript support (Selenium)
+- [ ] Webhooks for notifications
+- [ ] Web dashboard for monitoring
 
 ---
 
-⭐ Se este projeto foi útil para você, considere dar uma estrela!
+⭐ If this project was useful to you, consider giving it a star!
 
-📫 Tem alguma dúvida? Abra uma [issue](https://github.com/seu-usuario/webscraping-api/issues)!
+📫 Have any questions? Open an [issue](https://github.com/victorkelvin/webscraping-api/issues)!
