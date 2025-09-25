@@ -45,11 +45,11 @@ jobs:
         fi
         echo ""
         echo "=== Test files check ==="
-        if [ -f test_suite.py ]; then
-          echo "test_suite.py found"
-          head -10 test_suite.py
+        if [ -f tests/test_suite.py ]; then
+          echo "tests/test_suite.py found"
+          head -10 tests/test_suite.py
         else
-          echo "test_suite.py not found"
+          echo "tests/test_suite.py not found"
         fi
     
     - name: Install dependencies
@@ -84,7 +84,7 @@ jobs:
     
     - name: Run tests with pytest
       run: |
-        python -m pytest test_suite.py -v --cov=app --cov-report=xml
+        python -m pytest tests/test_suite.py -v --cov=app --cov-report=xml
     
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4
