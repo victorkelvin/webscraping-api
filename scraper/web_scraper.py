@@ -3,7 +3,10 @@ from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 import re
 from datetime import datetime
+import logging
 
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
 
 
 class WebScraper:
