@@ -4,10 +4,14 @@ import logging
 from urllib.parse import urlparse
 from datetime import datetime
 from scraper.web_scraper import WebScraper
+from middleware import SecurityMiddleware
+
 
 scraper = WebScraper()
 app = Flask(__name__)
 CORS(app)
+security_middleware = SecurityMiddleware(app)
+
 
 # loggin config
 logging.basicConfig(level=logging.INFO)

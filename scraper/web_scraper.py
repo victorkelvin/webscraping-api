@@ -92,11 +92,10 @@ class WebScraper:
             
             # Common product selectors
             product_selectors = [
-                '.product',
-                '.item',
+                '[class*="product"]',
+                '[id*="product"]',
                 '[data-product-id]',
-                '.product-item',
-                '.product-card'
+                '.item',
             ]
             
             for selector in product_selectors:

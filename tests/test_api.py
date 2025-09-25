@@ -1,5 +1,7 @@
 import requests
 import json
+import time
+import random
 
 # API base URL
 BASE_URL = "http://localhost:5000"
@@ -21,7 +23,7 @@ def test_basic_scraping():
         "url": "https://httpbin.org/html"
     }
     
-    response = requests.post(f"{BASE_URL}/scrape", json=payload)
+    response = requests.post(f"{BASE_URL}/scrape", json=payload, timeout=60)
     print(f"Status: {response.status_code}")
     
     if response.status_code == 200:
@@ -31,6 +33,8 @@ def test_basic_scraping():
         print(f"Total links: {len(data.get('links', []))}")
         print(f"Total images: {len(data.get('images', []))}")
         print(f"Total headings: {len(data.get('headings', []))}")
+        if data.get('headings'):
+            print(f"Heading: {data['headings'][0].get('text', 'N/A')}")
     else:
         print(f"Error: {response.text}")
     
@@ -42,7 +46,7 @@ def test_product_scraping():
     
     # Test with an example page with e-commerce-like structure
     payload = {
-        "url": "https://www.amazon.com/Best-Sellers-Electronics/zgbs/electronics/ref=zg_bs_nav_electronics_0"
+        "url": "https://books.toscrape.com/"
     }
     
     response = requests.post(f"{BASE_URL}/scrape/products", json=payload)
