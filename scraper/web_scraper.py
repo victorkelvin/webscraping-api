@@ -128,50 +128,73 @@ class WebScraper:
         """Extract product info from a BeautifulSoup element"""
         try:
             # Try to find product name
-            name_selectors = ['h1', 'h2', 'h3', '.title', '.name', '.product-name', '.product-title']
+            name_selectors = [
+                'h1', 'h2', 'h3',
+                '[class*="title"]', '[class*="name"]', '[class*="product-name"]', '[class*="product-title"]',
+                '[id*="title"]', '[id*="name"]', '[id*="product-name"]', '[id*="product-title"]'
+            ]
             name = ""
             for selector in name_selectors:
                 name_elem = element.select_one(selector)
                 if name_elem:
                     name = name_elem.get_text().strip()
                     break
-            
+
             # Try to find price
-            price_selectors = ['.price', '.cost', '.amount', '[data-price]', '.product-price']
+            price_selectors = [
+                '[class*="price"]', '[id*="price"]', '[data-price]',
+                '[class*="cost"]', '[id*="cost"]',
+                '[class*="amount"]', '[id*="amount"]',
+                '.product-price', '.price', '.cost', '.amount'
+            ]
             price = ""
             for selector in price_selectors:
                 price_elem = element.select_one(selector)
                 if price_elem:
                     price_text = price_elem.get_text().strip()
-                    # Extracting price using regex
                     price_match = re.search(r'([A-Za-z]{0,3}\$|€|£|¥|₹)\s*[\d.,]+', price_text)
                     if price_match:
                         price = price_match.group()
                         break
-            
+
             # Try to find image
+            image_selectors = [
+                'img', '[class*="image"] img', '[class*="img"] img',
+                '[class*="product-image"] img', '[class*="thumb"] img',
+                '[data-src]', '[data-original]'
+            ]
             image = ""
-            img_elem = element.select_one('img')
-            if img_elem and img_elem.get('src'):
-                image = urljoin(base_url, img_elem['src'])
-            
+            for selector in image_selectors:
+                img_elem = element.select_one(selector)
+                if img_elem:
+                    src = img_elem.get('src') or img_elem.get('data-src') or img_elem.get('data-original')
+                    if src:
+                        image = urljoin(base_url, src)
+                        break
+
             # Try to find product link
+            link_selectors = [
+                'a[href]', '[class*="link"] a[href]', '[class*="product-link"] a[href]',
+                '[class*="title"] a[href]', '[class*="name"] a[href]'
+            ]
             link = ""
-            link_elem = element.select_one('a[href]')
-            if link_elem:
-                link = urljoin(base_url, link_elem['href'])
-            
-            if name:  
+            for selector in link_selectors:
+                link_elem = element.select_one(selector)
+                if link_elem:
+                    link = urljoin(base_url, link_elem.get('href'))
+                    break
+
+            if name:
                 return {
                     'name': name,
                     'price': price,
                     'image': image,
                     'link': link
                 }
-            
+
         except Exception as e:
             logger.error(f"Error at extract product information: {str(e)}")
-        
+
         return None
 
 scraper = WebScraper()
