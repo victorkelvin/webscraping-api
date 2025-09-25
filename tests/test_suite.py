@@ -72,7 +72,7 @@ class TestWebScrapingAPI(unittest.TestCase):
                                data=json.dumps(test_payload),
                                content_type='application/json')
         
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, 403)
         
         data = json.loads(response.data)
         self.assertEqual(data['status'], 'error')

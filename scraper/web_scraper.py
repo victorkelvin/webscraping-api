@@ -19,7 +19,7 @@ class WebScraper:
     def scrape_page_info(self, url):
         """Extract basic page information"""
         try:
-            response = self.session.get(url, timeout=10)
+            response = self.session.get(url, timeout=30)
             response.raise_for_status()
             
             soup = BeautifulSoup(response.content, 'html.parser')
@@ -83,7 +83,7 @@ class WebScraper:
     def scrape_products_generic(self, url):
         """Try to extract products from a generic e-commerce page"""
         try:
-            response = self.session.get(url, timeout=10)
+            response = self.session.get(url, timeout=30)
             response.raise_for_status()
             
             soup = BeautifulSoup(response.content, 'html.parser')
