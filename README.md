@@ -222,7 +222,7 @@ The API uses optimized headers to avoid blocking:
 - **Rate Limiting** - Respect site limits
 - **robots.txt** - Check scraping policies
 - **JavaScript** - This API does not execute JavaScript (use Selenium for SPAs)
-- **Timeout** - Requests have a 10-second timeout
+- **Timeout** - Requests have a 30-second timeout
 - **Legal** - Only use on sites where you have permission
 
 ## 🤝 Contributing
@@ -242,8 +242,16 @@ webscraping-api/
 │   ├── __init__.py
 │   └── web_scraper.py  
 ├── tests/
-│   ├── test_app.py
-│   └── test_scraper.py
+│   ├── test_api.py
+│   └── test_suite.py
+├── .github/
+│   └── workflows/
+│       └── ci.yml
+├── Dockerfile         
+├── docker-compose.yml
+├── middleware.py
+├── README.md
+├── .gitignore
 └── requirements.txt
 ```
 
@@ -253,7 +261,7 @@ This project is under the MIT license. See the `LICENSE` file for more details.
 
 ## 👨‍💻 Author
 
-**Your Name**
+**Victor Kelvin**
 - GitHub: [@victorkelvin](https://github.com/victorkelvin)
 - LinkedIn: [Victor Kelvin](https://linkedin.com/in/victor-kelvin)
 - Email: victorkelvin@gmail.com
